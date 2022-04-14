@@ -1,0 +1,18 @@
+version: '3.3'
+services:
+  db:
+    image: mysql:8
+    restart: always
+    environment:
+      MYSQL_DATABASE: banking
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_USER: andre
+      MYSQL_ROOT_USER: root
+    volumes:
+      - "/opt/mysql_data:/var/lib/mysql"
+    ports:
+      - "3306:3306"
+
+
+
