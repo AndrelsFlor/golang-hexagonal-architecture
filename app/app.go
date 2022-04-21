@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -10,8 +9,6 @@ import (
 )
 
 func Start() {
-	fmt.Println("Service starting")
-
 	// mux é uma lib que simplifica o match das rotas
 	// Todas as funções dela são extamente iguais às do modulo de http nativo
 	router := mux.NewRouter()
