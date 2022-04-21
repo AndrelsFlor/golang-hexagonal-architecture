@@ -3,6 +3,9 @@ services:
   db:
     image: mysql:8
     restart: always
+    network_mode: host
+    logging:
+      driver: none
     environment:
       MYSQL_DATABASE: banking
       MYSQL_ROOT_PASSWORD: root
@@ -13,6 +16,16 @@ services:
       - "/opt/mysql_data:/var/lib/mysql"
     ports:
       - "3306:3306"
+
+  backend:
+    volumes:
+      - .:/usr/src
+    build:
+      dockerfile: Dockerfile
+      context: .
+    network_mode: host
+    ports:
+      - "8000:8000"
 
 
 

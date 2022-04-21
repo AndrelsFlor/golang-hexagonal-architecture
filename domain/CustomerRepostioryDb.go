@@ -13,7 +13,7 @@ type CustomerRepositoryDb struct {
 }
 
 func NewCustomerRepositoryDb() CustomerRepositoryDb {
-	client, err := sql.Open("mysql", "root:root@tcp(localhost:3306)/banking")
+	client, err := sql.Open("mysql", "root:root@tcp(0.0.0.0:3306)/banking")
 	if err != nil {
 		panic(err)
 	}
