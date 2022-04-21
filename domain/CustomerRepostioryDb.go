@@ -25,27 +25,43 @@ func NewCustomerRepositoryDb() CustomerRepositoryDb {
 	return CustomerRepositoryDb{client}
 }
 
-func (d CustomerRepositoryDb) FindAll() ([]Customer, error) {
+func statusToInt(status string) int {
+	var statusMap = make(map[string]int)
+	statusMap["inactive"] = 0
+	statusMap["active"] = 1
 
-	findAllSql := "select customer_id, name, city, zipcode, date_of_birth, status from customers"
+	return statusMap[status]
+}
 
-	rows, err := d.client.Query(findAllSql)
+func (d CustomerRepositoryDb) FindAll(status string) (*[]Customer, *errs.AppError) {
+	var findAllSql string
+	var rows *sql.Rows
+	var err error
+
+	if len(status) > 0 {
+		findAllSql = "select customer_id, name, city, zipcode, date_of_birth, status from customers where status = ?"
+		statusInt := statusToInt(status)
+		rows, err = d.client.Query(findAllSql, statusInt)
+
+	} else {
+		findAllSql = "select customer_id, name, city, zipcode, date_of_birth, status from customers"
+		rows, err = d.client.Query(findAllSql)
+
+	}
 	if err != nil {
-		log.Println("Error querying customer table " + err.Error())
-		return nil, err
+		return nil, errs.NewUnexpectedError("Error querying customers table")
 	}
 	customers := make([]Customer, 0)
 	for rows.Next() {
 		var c Customer
 		err := rows.Scan(&c.Id, &c.Name, &c.City, &c.Zipcode, &c.DateofBirth, &c.Status)
 		if err != nil {
-			log.Println("Error scanning customers table " + err.Error())
-			return nil, err
+			return nil, errs.NewUnexpectedError("Error  customers customer table ")
 		}
 
 		customers = append(customers, c)
 	}
-	return customers, nil
+	return &customers, nil
 }
 
 func (d CustomerRepositoryDb) ById(id string) (*Customer, *errs.AppError) {

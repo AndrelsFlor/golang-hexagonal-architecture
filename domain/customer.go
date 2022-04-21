@@ -17,7 +17,7 @@ type Customer struct {
 }
 
 type CustomerRepository interface {
-	FindAll() ([]Customer, error)
+	FindAll(status string) (*[]Customer, *errs.AppError)
 	// ById Usa ponteiro pq queremos enviar nil caso nao haja customer
 	ById(string) (*Customer, *errs.AppError)
 }
