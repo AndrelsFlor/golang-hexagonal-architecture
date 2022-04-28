@@ -1,29 +1,66 @@
 package app
 
 import (
+	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/jmoiron/sqlx"
 	"log"
 	"net/http"
+	"os"
 	"rest_api/domain"
 	"rest_api/service"
+	"time"
 )
 
+func sanityCheck() {
+	if os.Getenv("SERVER_ADDRESS") == "" ||
+		os.Getenv("SERVER_PORT") == "" {
+		log.Fatal("Environment variable not  defined...")
+	}
+}
+
 func Start() {
-	// mux é uma lib que simplifica o match das rotas
-	// Todas as funções dela são extamente iguais às do modulo de http nativo
+	sanityCheck()
+
 	router := mux.NewRouter()
-	//wiring
-	//ch := CustomerHandlers{service.NewCustomerService(domain.NewCustomerRepositoryStub())}
-	ch := CustomerHandlers{service.NewCustomerService(domain.NewCustomerRepositoryDb())}
+
+	dbClient := getDbClient()
+
+	customerRepositoryDb := domain.NewCustomerRepositoryDb(dbClient)
+	//accountRepositoryDb := domain.NewAccountRepositoryDb(dbClient)
+	ch := CustomerHandlers{service.NewCustomerService(customerRepositoryDb)}
 
 	//define routes
 	router.HandleFunc("/customers", ch.getAllCustomers).Methods(http.MethodGet)
 	router.HandleFunc("/customers/{customer_id:[0-9]+}", ch.getCustomer).Methods(http.MethodGet)
 
 	//starts server
-	err := http.ListenAndServe("0.0.0.0:8000", router)
+	address := os.Getenv("SERVER_ADDRESS")
+	port := os.Getenv("SERVER_PORT")
+	fmt.Println(address)
+	err := http.ListenAndServe(fmt.Sprintf("%s:%s", address, port), router)
 
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func getDbClient() *sqlx.DB {
+	dbUser := os.Getenv("DB_USER")
+	dbPasswd := os.Getenv("DB_PASSWD")
+	dbAddr := os.Getenv("DB_ADDR")
+	dbPort := os.Getenv("DB_PORT")
+	dbName := os.Getenv("DB_NAME")
+
+	dataSource := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPasswd, dbAddr, dbPort, dbName)
+	client, err := sqlx.Open("mysql", dataSource)
+	if err != nil {
+		panic(err)
+	}
+	// See "Important settings" section.
+	client.SetConnMaxLifetime(time.Minute * 3)
+	client.SetMaxOpenConns(10)
+	client.SetMaxIdleConns(10)
+
+	return client
 }

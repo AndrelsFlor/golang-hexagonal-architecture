@@ -3,26 +3,18 @@ package domain
 import (
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
 	"rest_api/errs"
 	"rest_api/logger"
-	"time"
 )
 
 type CustomerRepositoryDb struct {
-	client *sql.DB
+	client *sqlx.DB
 }
 
-func NewCustomerRepositoryDb() CustomerRepositoryDb {
-	client, err := sql.Open("mysql", "root:root@tcp(0.0.0.0:3306)/banking")
-	if err != nil {
-		panic(err)
-	}
-	// See "Important settings" section.
-	client.SetConnMaxLifetime(time.Minute * 3)
-	client.SetMaxOpenConns(10)
-	client.SetMaxIdleConns(10)
+func NewCustomerRepositoryDb(dbClient *sqlx.DB) CustomerRepositoryDb {
 
-	return CustomerRepositoryDb{client}
+	return CustomerRepositoryDb{dbClient}
 }
 
 func statusToInt(status string) int {
@@ -35,44 +27,30 @@ func statusToInt(status string) int {
 
 func (d CustomerRepositoryDb) FindAll(status string) (*[]Customer, *errs.AppError) {
 	var findAllSql string
-	var rows *sql.Rows
 	var err error
+	customers := make([]Customer, 0)
 
 	if len(status) > 0 {
 		findAllSql = "select customer_id, name, city, zipcode, date_of_birth, status from customers where status = ?"
 		statusInt := statusToInt(status)
-		rows, err = d.client.Query(findAllSql, statusInt)
-
+		err = d.client.Select(&customers, findAllSql, statusInt)
 	} else {
 		findAllSql = "select customer_id, name, city, zipcode, date_of_birth, status from customers"
-		rows, err = d.client.Query(findAllSql)
+		err = d.client.Select(&customers, findAllSql)
 
 	}
 	if err != nil {
 		logger.Error("Errror while querying customers table" + err.Error())
 		return nil, errs.NewUnexpectedError("Error querying customers table")
 	}
-	customers := make([]Customer, 0)
-	for rows.Next() {
-		var c Customer
-		err := rows.Scan(&c.Id, &c.Name, &c.City, &c.Zipcode, &c.DateofBirth, &c.Status)
-		if err != nil {
-			logger.Error("Errror while scannig customers table" + err.Error())
-			return nil, errs.NewUnexpectedError("Error  customers customer table ")
-		}
 
-		customers = append(customers, c)
-	}
 	return &customers, nil
 }
 
 func (d CustomerRepositoryDb) ById(id string) (*Customer, *errs.AppError) {
 	customerSql := "select customer_id, name, city, zipcode, date_of_birth, status from customers where customer_id = ?"
 	var c Customer
-
-	row := d.client.QueryRow(customerSql, id)
-
-	err := row.Scan(&c.Id, &c.Name, &c.City, &c.Zipcode, &c.DateofBirth, &c.Status)
+	err := d.client.Get(&c, customerSql, id)
 
 	if err != nil {
 		if err == sql.ErrNoRows {

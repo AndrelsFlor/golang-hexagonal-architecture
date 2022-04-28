@@ -1,14 +1,12 @@
-FROM golang:1.17-buster as builder
+FROM golang:1.17-alpine as builder
 WORKDIR /app
 COPY go.* ./
 RUN go mod download
 COPY . ./
-RUN go build -v -o server
+RUN CGO_ENABLED=0 GOOS=linux go build -o server
 
-FROM debian:buster-slim as deploy
-RUN set -x && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
+
+FROM alpine as deploy
 COPY --from=builder /app/server /app/server
 EXPOSE 8000
 CMD ["/app/server"]

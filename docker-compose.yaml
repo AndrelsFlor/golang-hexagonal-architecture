@@ -20,6 +20,14 @@ services:
   backend:
     volumes:
       - .:/usr/src
+    environment:
+      - SERVER_ADDRESS=0.0.0.0
+      - SERVER_PORT=8000
+      - DB_USER=root
+      - DB_PASSWD=root
+      - DB_ADDR=0.0.0.0
+      - DB_PORT=3306
+      - DB_NAME=banking
     build:
       dockerfile: Dockerfile
       context: .
