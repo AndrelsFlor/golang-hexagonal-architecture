@@ -1,17 +1,18 @@
 package domain
 
 import (
-	"github.com/jmoiron/sqlx"
 	"rest_api/errs"
 	"rest_api/logger"
 	"strconv"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type AccountRepositoryDb struct {
 	client *sqlx.DB
 }
 
-func (d *AccountRepositoryDb) Save(a Account) (*Account, *errs.AppError) {
+func (d *AccountRepositoryDb) Save(a *Account) (*Account, *errs.AppError) {
 	sqlInsert := "INSERT INTO accounts (customer_id, opening_date, account_type, amount, status) values (?,?,?,?,?)"
 
 	result, err := d.client.Exec(sqlInsert, a.CustomerId, a.OpeningDate, a.AccountType, a.Amount, a.Status)
@@ -28,7 +29,7 @@ func (d *AccountRepositoryDb) Save(a Account) (*Account, *errs.AppError) {
 
 	a.AccountId = strconv.FormatInt(id, 10)
 
-	return &a, nil
+	return a, nil
 
 }
 

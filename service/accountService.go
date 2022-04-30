@@ -12,10 +12,15 @@ type AccountService interface {
 }
 
 type DefaultAccountService struct {
-	repo domain.AccountRepository
+	repo domain.AccountRepositoryDb
 }
 
 func (s DefaultAccountService) NewAccount(req dto.NewAccountRequest) (*dto.NewAccountResponse, *errs.AppError) {
+	err := req.Validate()
+	if err != nil {
+		return nil, err
+	}
+
 	a := domain.Account{
 		AccountId:   "",
 		CustomerId:  req.CustomerId,
@@ -36,6 +41,6 @@ func (s DefaultAccountService) NewAccount(req dto.NewAccountRequest) (*dto.NewAc
 
 }
 
-func NewAccountService(repo domain.AccountRepository) DefaultAccountService {
+func NewAccountService(repo domain.AccountRepositoryDb) DefaultAccountService {
 	return DefaultAccountService{repo}
 }

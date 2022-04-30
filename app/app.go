@@ -2,14 +2,15 @@ package app
 
 import (
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/jmoiron/sqlx"
 	"log"
 	"net/http"
 	"os"
 	"rest_api/domain"
 	"rest_api/service"
 	"time"
+
+	"github.com/gorilla/mux"
+	"github.com/jmoiron/sqlx"
 )
 
 func sanityCheck() {
@@ -27,12 +28,15 @@ func Start() {
 	dbClient := getDbClient()
 
 	customerRepositoryDb := domain.NewCustomerRepositoryDb(dbClient)
-	//accountRepositoryDb := domain.NewAccountRepositoryDb(dbClient)
+	accountRepositoryDb := domain.NewAccountRepositoryDb(dbClient)
+
 	ch := CustomerHandlers{service.NewCustomerService(customerRepositoryDb)}
+	ah := AccountHandler{service: service.NewAccountService(accountRepositoryDb)}
 
 	//define routes
 	router.HandleFunc("/customers", ch.getAllCustomers).Methods(http.MethodGet)
 	router.HandleFunc("/customers/{customer_id:[0-9]+}", ch.getCustomer).Methods(http.MethodGet)
+	router.HandleFunc("/customers/{customer_id:[0-9]+}/account", ah.NewAccount).Methods(http.MethodPost)
 
 	//starts server
 	address := os.Getenv("SERVER_ADDRESS")
